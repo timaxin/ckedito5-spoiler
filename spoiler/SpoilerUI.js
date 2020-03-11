@@ -1,6 +1,5 @@
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
-import SpoilerIcon from '../../../../../../static/editor-icons/add-subheader.svg';
 
 export default class SpoilerUI extends Plugin {
 
@@ -11,6 +10,7 @@ export default class SpoilerUI extends Plugin {
   init() {
     const editor = this.editor;
 
+    const SpoilerIcon = editor.config.get('spoiler.icon');
     editor.ui.componentFactory.add( 'spoiler', locale => {
       const command = editor.commands.get( 'insertSpoiler' )
 
