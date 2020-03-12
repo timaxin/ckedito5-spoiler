@@ -25,6 +25,7 @@ export default class SpoilerEditing extends Plugin {
 
   afterInit() {
     const editor = this.editor;
+    const schema = editor.model.schema;
     const command = editor.commands.get( 'insertSpoiler' );
 
     // Overwrite default Enter key behavior.
@@ -32,17 +33,24 @@ export default class SpoilerEditing extends Plugin {
     // This listener is added in afterInit in order to register it after list's feature listener.
     // We can't use a priority for this, because 'low' is already used by the enter feature, unless
     // we'd use numeric priority in this case.
-    this.listenTo( this.editor.editing.view.document, 'enter', ( evt, data ) => {
-      const doc = this.editor.model.document;
-      const positionParent = doc.selection.getLastPosition().parent;
+    editor.model.document.registerPostFixer( writer => {
+      const changes = editor.model.document.differ.getChanges();
 
-      if ( doc.selection.isCollapsed && positionParent.isEmpty ) {
-        this.editor.execute( 'blockQuote' );
-        this.editor.editing.view.scrollToTheSelection();
+      for ( const entry of changes ) {
+        if ( entry.type == 'remove' ) {
+          if (entry.position.parent.name !== '$root') {
+            const spoiler = entry.position.parent.name === 'spoilerTitle' ? entry.position.parent.parent : entry.position.parent.parent.parent;
 
-        data.preventDefault();
-        evt.stop();
+            if (spoiler._children._nodes.some(elem => !(elem.isEmpty || (elem.name === 'spoilerContent' && elem._children._nodes.every(child => child.isEmpty))))) {
+              return false
+            }
+            writer.remove(spoiler)
+            return true
+          }
+        }
       }
+
+      return false;
     } );
   }
 
@@ -55,13 +63,14 @@ export default class SpoilerEditing extends Plugin {
     } );
 
     schema.register( 'spoilerTitle', {
+      isLimit: true,
       allowIn: 'spoiler',
       allowContentOf: '$block'
     } )
 
     schema.register( 'spoilerContent', {
       allowIn: 'spoiler',
-      allowContentOf: '$block'
+      allowContentOf: '$root'
     } )
 
     schema.addChildCheck( ( context, childDefinition ) => {
