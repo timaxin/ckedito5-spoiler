@@ -7,7 +7,9 @@ export default class InsertSpoilerCommand extends Command {
     this.editor.model.change( writer => {
       // Insert <spoiler>*</spoiler> at the current selection position
       // in a way that will result in creating a valid model structure.
-      this.editor.model.insertContent( createSpoiler( writer ) );
+      let spoiler = createSpoiler( writer );
+      this.editor.model.insertContent( spoiler );
+      writer.setSelection( spoiler._children._nodes[1], 'on' );
     } );
   }
 

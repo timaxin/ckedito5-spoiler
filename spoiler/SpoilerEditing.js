@@ -27,7 +27,6 @@ export default class SpoilerEditing extends Plugin {
   afterInit() {
     const editor = this.editor;
     const schema = editor.model.schema;
-    const command = editor.commands.get( 'insertSpoiler' );
 
     // Overwrite default Enter key behavior.
     // If Enter key is pressed with selection collapsed in empty block inside a quote, break the quote.
