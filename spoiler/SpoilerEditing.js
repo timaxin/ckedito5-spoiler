@@ -42,7 +42,7 @@ export default class SpoilerEditing extends Plugin {
           if (entry.position.parent.name !== '$root') {
             const spoiler = entry.position.parent.name === 'spoilerTitle' ? entry.position.parent.parent : entry.position.parent.parent.parent;
 
-            if (spoiler) {
+            if (spoiler && spoiler.name === 'spoiler') {
               if (spoiler._children._nodes.some(elem => !(elem.isEmpty || (elem.name === 'spoilerContent' && elem._children._nodes.every(child => child.isEmpty))))) {
                 return false
               }
