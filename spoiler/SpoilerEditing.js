@@ -76,7 +76,7 @@ export default class SpoilerEditing extends Plugin {
     } )
 
     schema.addChildCheck( ( context, childDefinition ) => {
-      if ( (context.endsWith( 'spoilerContent' ) && childDefinition.name === 'spoiler') || childDefinition.name === 'blockQuote' ) {
+      if ( context.endsWith( 'spoilerContent' ) && ['spoiler', 'blockQuote'].includes(childDefinition.name)) {
         return false;
       }
     } );
