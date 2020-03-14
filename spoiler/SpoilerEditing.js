@@ -2,6 +2,7 @@ import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import { toWidget, toWidgetEditable } from '@ckeditor/ckeditor5-widget/src/utils';
 import Widget from '@ckeditor/ckeditor5-widget/src/widget';
 import InsertSpoilerCommand from './InsertSpoilerCommand';
+import { enablePlaceholder } from '@ckeditor/ckeditor5-engine/src/view/placeholder';
 
 export default class SpoilerEditing extends Plugin {
 
@@ -84,6 +85,7 @@ export default class SpoilerEditing extends Plugin {
 
   _defineConverters() {
     const conversion = this.editor.conversion;
+    const view = this.editor.editing.view;
 
     // <spoiler> converters
     conversion.for( 'upcast' ).elementToElement( {
@@ -129,6 +131,11 @@ export default class SpoilerEditing extends Plugin {
       view: ( modelElement, viewWriter ) => {
         // Note: You use a more specialized createEditableElement() method here.
         const h3 = viewWriter.createEditableElement( 'h3', { class: 'spoiler-title' } );
+        enablePlaceholder({
+          view,
+          element: h3,
+          text: 'Заголовок спойлера'
+        })
 
         return toWidgetEditable( h3, viewWriter );
       }
@@ -154,6 +161,13 @@ export default class SpoilerEditing extends Plugin {
       view: ( modelElement, viewWriter ) => {
         // Note: You use a more specialized createEditableElement() method here.
         const div = viewWriter.createEditableElement( 'div', { class: 'spoiler-content' } );
+        setTimeout(() => {
+          enablePlaceholder({
+            view,
+            element: div._children[0],
+            text: 'Содержание спойлера'
+          })
+        }, 0)
 
         return toWidgetEditable( div, viewWriter );
       }
