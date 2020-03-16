@@ -3,6 +3,7 @@ import { toWidget, toWidgetEditable } from '@ckeditor/ckeditor5-widget/src/utils
 import Widget from '@ckeditor/ckeditor5-widget/src/widget';
 import InsertSpoilerCommand from './InsertSpoilerCommand';
 import { enablePlaceholder } from '@ckeditor/ckeditor5-engine/src/view/placeholder';
+import DocumentSelection from '@ckeditor/ckeditor5-engine/src/model/documentselection';
 
 export default class SpoilerEditing extends Plugin {
 
@@ -16,10 +17,49 @@ export default class SpoilerEditing extends Plugin {
 
   init() {
     const editor = this.editor;
+    const model = editor.model;
     const t = editor.t;
+    const view = editor.editing.view.document;
 
     this._defineSchema();
     this._defineConverters();
+
+    this.listenTo(view, 'enter', (evt, data) => {
+      const doc = this.editor.model.document;
+      const positionParent = doc.selection.getLastPosition().parent;
+
+      if ( positionParent.name == 'spoilerTitle' ) {
+        if (data.isSoft) {
+          model.change(writer => {
+            const paragraph = writer.createElement( 'paragraph' );
+            let positionBefore = writer.createPositionBefore( positionParent.parent );
+            writer.insert( paragraph, positionBefore );
+            this._collapseSelectionAt( writer, doc.selection, writer.createPositionAt( paragraph, 0 ) );
+          })
+        } else {
+          model.change(writer => {
+            writer.setSelection(positionParent.parent._children._nodes[1], 0);
+          });
+        }
+        data.preventDefault();
+        evt.stop();
+      }
+
+      if (doc.selection.isCollapsed && positionParent.name === 'paragraph' && positionParent.isEmpty && positionParent.parent.name === 'spoilerContent' && !data.isSoft) {
+        model.change(writer => {
+          const paragraph = writer.createElement( 'paragraph' );
+          let positionAfter = writer.createPositionAfter( positionParent.parent.parent );
+          writer.insert( paragraph, positionAfter );
+          this._collapseSelectionAt( writer, doc.selection, writer.createPositionAt( paragraph, 0 ) );
+          writer.remove(positionParent);
+          setTimeout(() => {
+            this.editor.editing.view.scrollToTheSelection();
+          }, 0)
+        })
+        data.preventDefault();
+        evt.stop();
+      }
+    });
 
     editor.commands.add( 'insertSpoiler', new InsertSpoilerCommand( this.editor ) )
   }
@@ -28,11 +68,6 @@ export default class SpoilerEditing extends Plugin {
     const editor = this.editor;
     const schema = editor.model.schema;
 
-    // Overwrite default Enter key behavior.
-    // If Enter key is pressed with selection collapsed in empty block inside a quote, break the quote.
-    // This listener is added in afterInit in order to register it after list's feature listener.
-    // We can't use a priority for this, because 'low' is already used by the enter feature, unless
-    // we'd use numeric priority in this case.
     editor.model.document.registerPostFixer( writer => {
       const changes = editor.model.document.differ.getChanges();
 
@@ -65,7 +100,6 @@ export default class SpoilerEditing extends Plugin {
     } );
 
     schema.register( 'spoilerTitle', {
-      isLimit: true,
       allowIn: 'spoiler',
       allowContentOf: '$block'
     } )
@@ -171,5 +205,13 @@ export default class SpoilerEditing extends Plugin {
         return toWidgetEditable( div, viewWriter );
       }
     } );
+  }
+
+  _collapseSelectionAt( writer, selection, positionOrRange ) {
+    if ( selection instanceof DocumentSelection ) {
+      writer.setSelection( positionOrRange );
+    } else {
+      selection.setTo( positionOrRange );
+    }
   }
 }
