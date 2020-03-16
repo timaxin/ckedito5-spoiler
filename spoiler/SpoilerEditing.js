@@ -18,11 +18,22 @@ export default class SpoilerEditing extends Plugin {
   init() {
     const editor = this.editor;
     const model = editor.model;
+    const selection = model.document.selection;
     const t = editor.t;
     const view = editor.editing.view.document;
 
     this._defineSchema();
     this._defineConverters();
+
+    this.listenTo(selection, 'change:range', (evt) => {
+      const doc = this.editor.model.document;
+      const selectedElement = doc.selection.getSelectedElement();
+      if (selectedElement && selectedElement.name === 'spoiler') {
+        model.change(writer => {
+          writer.setSelection(selectedElement._children._nodes[1], 0);
+        })
+      }
+    })
 
     this.listenTo(view, 'enter', (evt, data) => {
       const doc = this.editor.model.document;
