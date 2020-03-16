@@ -17,7 +17,7 @@ export default class SpoilerUI extends Plugin {
       const view = new ButtonView( locale );
 
       view.set( {
-        label: 'Вставить спойлер',
+        label: 'Спойлер',
         icon: SpoilerIcon,
         tooltip: true
       } );
