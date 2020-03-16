@@ -77,29 +77,22 @@ export default class SpoilerEditing extends Plugin {
 
   afterInit() {
     const editor = this.editor;
-    const schema = editor.model.schema;
+    const model = editor.model;
+    const view = editor.editing.view.document;
 
-    editor.model.document.registerPostFixer( writer => {
-      const changes = editor.model.document.differ.getChanges();
+    this.listenTo(view, 'delete', (evt, data) => {
+      const doc = editor.model.document;
+      const positionParent = doc.selection.getLastPosition().parent;
 
-      for ( const entry of changes ) {
-        if ( entry.type === 'remove' ) {
-          if (entry.position.parent.name !== '$root') {
-            const spoiler = entry.position.parent.name === 'spoilerTitle' ? entry.position.parent.parent : entry.position.parent.parent.parent;
-
-            if (spoiler && spoiler.name === 'spoiler') {
-              if (spoiler._children._nodes.some(elem => !(elem.isEmpty || (elem.name === 'spoilerContent' && elem._children._nodes.every(child => child.isEmpty))))) {
-                return false
-              }
-              writer.remove(spoiler)
-              return true
-            }
-          }
+      if (positionParent && positionParent.name === 'spoilerTitle') {
+        const spoiler = positionParent.parent;
+        if (spoiler._children._nodes.every(node => node.isEmpty || node._children._nodes.every(subNode => subNode.isEmpty))) {
+          model.change(writer => {
+            writer.remove(spoiler)
+          })
         }
       }
-
-      return false;
-    } );
+    }, {priority: 'lowest'})
   }
 
   _defineSchema() {
