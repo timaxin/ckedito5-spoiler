@@ -111,6 +111,7 @@ export default class SpoilerEditing extends Plugin {
     } );
 
     schema.register( 'spoilerTitle', {
+      isLimit: true,
       allowIn: 'spoiler',
       allowContentOf: '$block'
     } )
