@@ -45,7 +45,7 @@ export default class SpoilerEditing extends Plugin {
         evt.stop();
       }
 
-      if (doc.selection.isCollapsed && positionParent.name === 'paragraph' && positionParent.isEmpty && positionParent.parent.name === 'spoilerContent' && !data.isSoft) {
+      if (doc.selection.isCollapsed && positionParent.name === 'paragraph' && positionParent.isEmpty && positionParent.parent.name === 'spoilerContent' && !data.isSoft && !positionParent.nextSibling) {
         model.change(writer => {
           const paragraph = writer.createElement( 'paragraph' );
           let positionAfter = writer.createPositionAfter( positionParent.parent.parent );
