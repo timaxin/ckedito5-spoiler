@@ -2,7 +2,7 @@ import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import { toWidget, toWidgetEditable } from '@ckeditor/ckeditor5-widget/src/utils';
 import Widget from '@ckeditor/ckeditor5-widget/src/widget';
 import InsertSpoilerCommand from './InsertSpoilerCommand';
-import { enablePlaceholder } from '@ckeditor/ckeditor5-engine/src/view/placeholder';
+import { enablePlaceholder, disablePlaceholder } from '@ckeditor/ckeditor5-engine/src/view/placeholder';
 import DocumentSelection from '@ckeditor/ckeditor5-engine/src/model/documentselection';
 
 export default class SpoilerEditing extends Plugin {
@@ -56,6 +56,11 @@ export default class SpoilerEditing extends Plugin {
         evt.stop();
       }
 
+      if (positionParent.parent.name === 'spoilerContent' && this.placeholderEnabled) {
+        disablePlaceholder(this.editor.editing.view, this.element)
+        this.placeholderEnabled = false
+      }
+
       if (doc.selection.isCollapsed && positionParent.name === 'paragraph' && positionParent.isEmpty && positionParent.parent.name === 'spoilerContent' && !data.isSoft && !positionParent.nextSibling) {
         model.change(writer => {
           const paragraph = writer.createElement( 'paragraph' );
@@ -79,6 +84,7 @@ export default class SpoilerEditing extends Plugin {
     const editor = this.editor;
     const model = editor.model;
     const view = editor.editing.view.document;
+    const editingView = editor.editing.view;
 
     this.listenTo(view, 'delete', (evt, data) => {
       const doc = editor.model.document;
@@ -91,6 +97,14 @@ export default class SpoilerEditing extends Plugin {
             writer.remove(spoiler)
           })
         }
+      }
+      if (positionParent.parent.name === 'spoilerContent' && positionParent.parent._children.length === 1) {
+        enablePlaceholder({
+          view: editingView,
+          element: this.element,
+          text: 'Содержание спойлера'
+        })
+        this.placeholderEnabled = true
       }
     }, {priority: 'lowest'})
   }
@@ -149,7 +163,7 @@ export default class SpoilerEditing extends Plugin {
       }
     } );
 
-    // <simpleBoxTitle> converters
+    // <spoilerTitle> converters
     conversion.for( 'upcast' ).elementToElement( {
       model: 'spoilerTitle',
       view: {
@@ -181,7 +195,9 @@ export default class SpoilerEditing extends Plugin {
 
     // <spoilerContent> converters
     conversion.for( 'upcast' ).elementToElement( {
-      model: 'spoilerContent',
+      model: ( viewElement, modelWriter ) => {
+        return modelWriter.createElement( 'spoilerContent' );
+      },
       view: {
         name: 'div',
         classes: 'spoiler-content'
@@ -200,11 +216,13 @@ export default class SpoilerEditing extends Plugin {
         // Note: You use a more specialized createEditableElement() method here.
         const div = viewWriter.createEditableElement( 'div', { class: 'spoiler-content' } );
         setTimeout(() => {
+          this.element = div._children[0]
           enablePlaceholder({
             view,
             element: div._children[0],
             text: 'Содержание спойлера'
           })
+          this.placeholderEnabled = false
         }, 0)
 
         return toWidgetEditable( div, viewWriter );
