@@ -106,7 +106,7 @@ export default class SpoilerEditing extends Plugin {
         })
         this.placeholderEnabled = true
       }
-    }, {priority: 'lowest'})
+    }, {priority: 'high'})
   }
 
   _defineSchema() {
