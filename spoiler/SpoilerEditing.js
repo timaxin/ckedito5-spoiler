@@ -98,7 +98,7 @@ export default class SpoilerEditing extends Plugin {
           })
         }
       }
-      if (positionParent.parent.name === 'spoilerContent' && positionParent.parent._children.length === 1) {
+      if (positionParent && positionParent.parent && positionParent.parent.name === 'spoilerContent' && positionParent.parent._children.length === 1) {
         enablePlaceholder({
           view: editingView,
           element: this.element,
